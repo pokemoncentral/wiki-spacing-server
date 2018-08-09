@@ -1,0 +1,19 @@
+{
+  "name": "wiki-spacing-server",
+  "version": "1.0.0",
+  "description": "Server to agree on spacing values",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pokemoncentral/wiki-spacing-server.git"
+  },
+  "author": "Davide Laezza",
+  "license": "CC0-1.0 ",
+  "bugs": {
+    "url": "https://github.com/pokemoncentral/wiki-spacing-server/issues"
+  },
+  "homepage": "https://github.com/pokemoncentral/wiki-spacing-server#readme"
+}
