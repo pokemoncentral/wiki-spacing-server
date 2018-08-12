@@ -2,5 +2,5 @@
 
 .git
 db/Dockerfile
-docker-compose.yaml
+compose-dev.yaml
 **/node_modules

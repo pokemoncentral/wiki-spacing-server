@@ -6,17 +6,23 @@ services:
   web:
     build:
       args:
-        arch: $ARCH
+        ARCH: ''
       context: server
-
-    command: node /usr/src/app
 
     depends_on:
       - db
 
+    environment:
+      DB_PORT:
+      WEB_PORT:
+
+    image: davla/misc:wiki-spacing-web-dev
+
     ports:
-      - target: '29004'
+      - target: $WEB_PORT
         published: '13980'
+
+    restart: on-failure
 
     volumes:
       - type: bind
@@ -26,12 +32,16 @@ services:
   db:
     build:
       args:
-        arch: $ARCH
+        ARCH: ''
       context: db
+
+    image: davla/misc:wiki-spacing-db-dev
 
     ports:
       - target: '5432'
-        published: '32460'
+        published: $DB_PORT
+
+    restart: on-failure
 
     volumes:
       - type: volume

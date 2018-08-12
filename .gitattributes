@@ -1,0 +1,4 @@
+# Defining custom merge strategies
+
+# Files that should not be overridden by other branches ones
+/server/Dockerfile=ours
