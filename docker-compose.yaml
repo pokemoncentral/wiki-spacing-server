@@ -1,0 +1,38 @@
+# Docker compose file
+
+version: '3.2'
+
+services:
+  web:
+    build:
+      args:
+        arch: $ARCH
+      context: server
+
+    command: node /usr/src/app
+
+    depends_on:
+      - db
+
+    ports:
+      - target: '29004'
+        published: '13980'
+
+    volumes:
+      - type: bind
+        source: ./server
+        target: /usr/src/app
+
+  db:
+    build:
+      args:
+        arch: $ARCH
+      context: db
+
+    ports:
+      - target: '5432'
+        published: '32460'
+
+    volumes:
+      - type: volume
+        target: /var/lib/postgresql/data

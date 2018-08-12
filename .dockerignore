@@ -1,0 +1,6 @@
+# Ignored files for docker containers
+
+.git
+db/Dockerfile
+docker-compose.yaml
+**/node_modules
