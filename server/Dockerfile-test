@@ -1,4 +1,7 @@
+# Dockerfile for web server - testing environment
+
 FROM davla/misc:wiki-spacing-web-dev
 
+# Running tests from the app sources
 WORKDIR /usr/src/app
 CMD ["npm", "run", "test"]

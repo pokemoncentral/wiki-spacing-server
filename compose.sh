@@ -16,6 +16,10 @@
 #
 ###################################################
 
+# Database port (defautl value, as the database is unreachable from outside
+# the docker network)
+export DB_PORT=5432
+
 # Web server port on docker network
 export WEB_PORT=29004
 

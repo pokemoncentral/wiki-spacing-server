@@ -1,5 +1,5 @@
 /**
- * @fileoverview
+ * @fileoverview Tests file.
  *
  * Created by Davide on 8/12/18.
  */
@@ -8,12 +8,23 @@ const chai = require('chai');
 chai.use(require('chai-http'));
 const expect = chai.expect;
 
+/**
+ * @summary Range of valid ports, shifted down by 1024.
+ * @type {number}
+ */
 const PORT_RANGE = 2 ^ 16 - 1024;
+
+/**
+ * @summary Returns a random valid port number, between 1024 and 65536.
+ * @return {number} A valid port number, between 1024 and 65536.
+ */
 const randomPort = () => Math.floor(Math.random() * PORT_RANGE + 1024);
 
+// Changing argv to use random ports
 const PORT = randomPort();
 process.argv[2] = PORT.toString();
 process.argv[3] = process.env.DB_PORT;
+
 const server = require('../index.js');
 
 describe('TDD testing', function() {
@@ -52,6 +63,7 @@ describe('TDD testing', function() {
                 expect(size.voters).to.be.an('array');
                 size.voters.forEach(voter => expect(voter).to.be.a('string'));
 
+                // Sizes should start with a number
                 expect(size.value.match(/^\d+\.?\d*/)).not.to.be.null;
             });
         });
