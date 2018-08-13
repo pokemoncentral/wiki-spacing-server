@@ -4,10 +4,10 @@ export DB_PORT=32460
 export WEB_PORT=29004
 
 EXTRA_COMPOSE_FILE=''
-while getopts ':E' OPTION; do
+while getopts 'E:' OPTION; do
     case "$OPTION" in
         'E')
-            EXTRA_COMPOSE_FILE="-f compose-\"$OPTARG\".yaml"
+            EXTRA_COMPOSE_FILE="-f compose-$OPTARG.yaml"
             ;;
 
         *)  # getopts already printed an error message

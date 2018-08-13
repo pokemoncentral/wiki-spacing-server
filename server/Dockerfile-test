@@ -1,0 +1,4 @@
+FROM davla/misc:wiki-spacing-web-dev
+
+WORKDIR /usr/src/app
+CMD ["npm", "run", "test"]

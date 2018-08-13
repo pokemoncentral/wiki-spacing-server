@@ -1,4 +1,5 @@
-# Docker compose file
+# Base docker compose file, that the others are meant to override.
+# Used for development environment.
 
 version: '3.2'
 
