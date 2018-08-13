@@ -19,7 +19,8 @@ const server = require('../index.js');
 describe('TDD testing', function() {
     describe('CLI parameters', function() {
         it('should listen on the passed port', async function() {
-            const resp = await chai.request(`http://localhost:${ PORT }`).get('/');
+            const resp = await chai.request(`http://localhost:${ PORT }`)
+                                   .get('/');
 
             expect(resp.ok).to.be.true;
         });
@@ -29,11 +30,11 @@ describe('TDD testing', function() {
             const body = resp.body;
 
             expect(resp.ok).to.be.true;
-            expect(body).not.to.have.all.keys('error');
+            expect(body).not.to.have.any.keys('error');
         })
     });
 
-    describe('GET endpoints', function() {
+    describe.skip('GET endpoints', function() {
         before(function() {
             this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
         });
@@ -56,7 +57,7 @@ describe('TDD testing', function() {
         });
     });
 
-    describe('PUT endpoints', function() {
+    describe.skip('PUT endpoints', function() {
         before(async function() {
             this.user = 'Frænky';
             this.vote = {

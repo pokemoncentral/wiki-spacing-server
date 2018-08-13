@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export DB_PORT=32460
+export DB_PORT=5432
 export WEB_PORT=29004
 
 EXTRA_COMPOSE_FILE=''

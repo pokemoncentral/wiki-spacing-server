@@ -5,7 +5,7 @@ create database spacing
     encoding 'UTF8'
     owner wiki;
 
-\connect spacing;
+\connect spacing wiki;
 create table votes (
     name        text,
     tiny        text,

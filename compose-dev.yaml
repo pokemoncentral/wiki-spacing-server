@@ -38,10 +38,6 @@ services:
 
     image: davla/misc:wiki-spacing-db-dev
 
-    ports:
-      - target: '5432'
-        published: $DB_PORT
-
     restart: on-failure
 
     volumes:
