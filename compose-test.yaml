@@ -9,7 +9,7 @@ services:
 
     image: davla/misc:wiki-spacing-web-test
 
-    restart: "no"
+    restart: 'no'
 
   db:
     image: davla/misc:wiki-spacing-db-test
