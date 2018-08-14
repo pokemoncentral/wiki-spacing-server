@@ -4,10 +4,11 @@ create user wiki;
 create database spacing
     encoding 'UTF8'
     owner wiki;
+grant all on database spacing to wiki;
 
 \connect spacing wiki;
 create table votes (
-    name        text,
+    name        text    primary key,
     tiny        text,
     small       text,
     medium      text,

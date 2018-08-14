@@ -19,7 +19,7 @@ app.use(db(DB_PORT));
 
 app.use(async ctx => {
     ctx.body = 'It works\n';
-    await ctx.db.votes();
+    // await ctx.db.getAllVotes();
 });
 
 module.exports = app.listen(PORT);

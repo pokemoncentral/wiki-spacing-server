@@ -7,6 +7,7 @@
 const chai = require('chai');
 chai.use(require('chai-http'));
 const expect = chai.expect;
+const rewire = require('rewire');
 
 /**
  * @summary Range of valid ports, shifted down by 1024.
@@ -25,6 +26,7 @@ const PORT = randomPort();
 process.argv[2] = PORT.toString();
 process.argv[3] = process.env.DB_PORT;
 
+const DB = rewire('../lib/db.js').__get__('DB');
 const server = require('../index.js');
 
 describe('TDD testing', function() {
@@ -43,6 +45,50 @@ describe('TDD testing', function() {
             expect(resp.ok).to.be.true;
             expect(body).not.to.have.any.keys('error');
         })
+    });
+
+    describe('Database tests', function() {
+        before(function() {
+            this.db = new DB(parseInt(process.argv[3]));
+            this.user = 'Frænky';
+            this.vote = {
+                name: this.user,
+                tiny: '12ex',
+                small: '0.2em',
+                medium: '10em',
+                large: '18px',
+                huge: '0.6em'
+            };
+        });
+
+        it('should insert a vote', async function() {
+            const result = await this.db.insertVote(this.vote);
+
+            expect(result).to.include.all.keys('created');
+            expect(result.created).to.be.true;
+
+            const vote = await this.db.getVote(this.user);
+
+            expect(vote).to.eql(this.vote);
+        });
+
+        it('should fetch a vote', async function() {
+            const vote = await this.db.getVote(this.user);
+
+            expect(vote).to.eql(this.vote);
+        });
+
+        it('should replace a vote', async function() {
+            this.vote.huge = '27em';
+            const result = await this.db.updateVote(this.vote);
+
+            expect(result).to.include.all.keys('created');
+            expect(result.created).to.be.false;
+
+            const vote = await this.db.getVote(this.user);
+
+            expect(vote).to.eql(this.vote);
+        });
     });
 
     describe.skip('GET endpoints', function() {

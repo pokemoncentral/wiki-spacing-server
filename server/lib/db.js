@@ -16,16 +16,60 @@ class DB {
             client: 'pg',
             version: '10.5',
             connection: {
+                database: 'spacing',
                 host: 'db',
                 port: port,
-                user: 'wiki',
-            database: 'spacing'
+                user: 'wiki'
             },
-        })
+        });
+
+        this.collectNames = {
+            names: this.knex.raw('array_agg(names)')
+        };
+
+        this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
     }
 
-    votes() {
-        return this.knex.select().table('votes');
+    _getValue(valueName) {
+        this.select(Object.assign({
+                    size: knex.raw(`'${ valueName }'`),
+                    value: valueName
+                }, this.collectNames))
+            .from('votes');
+    }
+
+    getAllVotes() {
+        const first = this._getValue.call(this.knex, this.sizes[0]);
+        return this.sizes.slice(1).reduce((query, size) =>
+                query.union(this._getValue.bind(this.knex, size)), first);
+    }
+
+    getVote(user) {
+        return this.knex.first()
+                        .from('votes')
+                        .where('name', user);
+    }
+
+    insertVote(vote) {
+        return this.knex.insert(vote)
+                        .into('votes')
+                        .returning('name')
+                        .then(res => { return {res, created: true}});
+    }
+
+    async replaceVote(vote) {
+        const dbVote = await this.getVote(vote.user);
+        return dbVote.length > 0
+                ? this.updateVote(vote)
+                : this.insertVote(vote);
+    }
+
+    updateVote(vote) {
+        return this.knex.update(vote)
+                        .from('votes')
+                        .where('name', vote.name)
+                        .returning('name')
+                        .then(res => { return {res, created: false}});
     }
 }
 
