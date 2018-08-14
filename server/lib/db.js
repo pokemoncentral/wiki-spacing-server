@@ -6,6 +6,7 @@
  */
 
 const knex = require('knex');
+const type = require('type-detect');
 
 /**
  *
@@ -24,24 +25,53 @@ class DB {
         });
 
         this.collectNames = {
-            names: this.knex.raw('array_agg(names)')
+            names: this.knex.raw('array_agg(name)')
         };
 
         this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
     }
 
+
+    /**
+     * Returns another function to avoid binding this
+     *
+     * @param valueName
+     * @returns {function(): *}
+     * @private
+     */
     _getValue(valueName) {
-        this.select(Object.assign({
-                    size: knex.raw(`'${ valueName }'`),
-                    value: valueName
-                }, this.collectNames))
-            .from('votes');
+        const projection = Object.assign({
+                size: this.knex.raw(`'${ valueName }'`),
+                value: valueName
+            }, this.collectNames);
+
+        return function() {
+            return this.select(projection)
+                       .from('votes')
+                       .groupBy(valueName);
+        }
+    }
+
+    /**
+     * Returns another function to avoid binding this
+     *
+     * @param created
+     * @return {function(*): *}
+     *
+     * @private
+     */
+    static _setCreated(created) {
+        return function(result) {
+            const target = type(result) === 'Object' ? result : {result};
+            target.created = created;
+            return target;
+        };
     }
 
     getAllVotes() {
-        const first = this._getValue.call(this.knex, this.sizes[0]);
-        return this.sizes.slice(1).reduce((query, size) =>
-                query.union(this._getValue.bind(this.knex, size)), first);
+        return this.knex.union(this.sizes.map(this._getValue.bind(this)))
+                        .orderBy('size', 'desc')
+                        .orderBy('value');
     }
 
     getVote(user) {
@@ -54,14 +84,12 @@ class DB {
         return this.knex.insert(vote)
                         .into('votes')
                         .returning('name')
-                        .then(res => { return {res, created: true}});
+                        .then(DB._setCreated(true));
     }
 
     async replaceVote(vote) {
-        const dbVote = await this.getVote(vote.user);
-        return dbVote.length > 0
-                ? this.updateVote(vote)
-                : this.insertVote(vote);
+        const dbVote = await this.getVote(vote.name);
+        return dbVote ? this.updateVote(vote) : this.insertVote(vote);
     }
 
     updateVote(vote) {
@@ -69,7 +97,7 @@ class DB {
                         .from('votes')
                         .where('name', vote.name)
                         .returning('name')
-                        .then(res => { return {res, created: false}});
+                        .then(DB._setCreated(false));
     }
 }
 
