@@ -43,11 +43,6 @@ while getopts 'E:' OPTION; do
 done
 shift $(( OPTIND - 1 ))
 
-if [[ "$*" =~ [[:space:]]- ]]; then
-    echo >&2 "Named options must not appear before named arguments as in: $*"
-    exit 1
-fi
-
 ###################################################
 #
 #           Invoking docker compose
