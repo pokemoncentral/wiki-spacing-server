@@ -6,16 +6,11 @@
  
 const chai = require('chai');
 const expect = chai.expect;
-const Promise = require('bluebird');
-const rewire = require('rewire');
 
 chai.use(require('chai-http'));
 
-const db = rewire('../lib/db.js');
-const isValid = rewire('../lib/validate.js');
-
-const DB = db.__get__('DB');
-const {DBError, MissingColumnError} = db;
+const { DB, DBError, MissingColumnError } = require('../lib/db.js');
+const isValid = require('../lib/validate.js');
 
 /**
  * @summary Range of valid ports, shifted down by 1024.
