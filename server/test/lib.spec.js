@@ -61,6 +61,21 @@ describe('Database tests', function() {
         expect(vote).to.eql(this.vote);
     });
 
+    it('should only replace the supplied values of a vote', async function() {
+        this.vote.huge = '2em';
+        const incompleteVote = Object.assign({}, this.vote);
+        delete incompleteVote.tiny;
+
+        const result = await this.db.updateVote(incompleteVote);
+
+        expect(result).to.be.an('Object')
+                      .with.property('created', false);
+
+        const fetchedVote = await this.db.getVote(this.vote.name);
+
+        expect(fetchedVote).to.eql(this.vote);
+    });
+
     it('should create the vote of a non-existing user', async function() {
         this.vote.name = this.user1;
 
