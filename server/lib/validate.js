@@ -24,6 +24,7 @@ const getSizes = vote => Object.keys(vote)
  * <ul>
  *     <li>It must begin with a valid CSS number (eg, 9 - 0.2 - .5).</li>
  *     <li>It must end with one of these units of measure: ex, em or rem.</li>
+ *     <li>All of the above is repeated one or twice.</li>
  * </ul>
  *
  * @summary Returns true if the size value is valid.
@@ -31,7 +32,7 @@ const getSizes = vote => Object.keys(vote)
  * @param {string} size - The size value to be validated.
  * @return {boolean} Whether the size value is valid.
  */
-const validSize = size => /^\d*\.?\d+\s*(em|ex|rem)/.test(size);
+const validSize = size => /^(\d*\.?\d+\s*(em|ex|rem)\s*){1,2}$/.test(size);
 
 /**
  * @summary Returns the invalid size names of a vote.
