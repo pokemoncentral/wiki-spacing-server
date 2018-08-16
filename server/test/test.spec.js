@@ -5,11 +5,17 @@
  */
  
 const chai = require('chai');
-chai.use(require('chai-http'));
 const expect = chai.expect;
+const Promise = require('bluebird');
 const rewire = require('rewire');
 
-const DB = rewire('../lib/db.js').__get__('DB');
+chai.use(require('chai-http'));
+
+const db = rewire('../lib/db.js');
+const isValid = rewire('../lib/validate.js');
+
+const DB = db.__get__('DB');
+const {DBError, MissingColumnError} = db;
 
 /**
  * @summary Range of valid ports, shifted down by 1024.
@@ -139,6 +145,61 @@ describe('TDD testing', function() {
         });
     });
 
+    describe('Input validation', function() {
+        before(function() {
+            this.db = new DB(parseInt(process.argv[3]));
+
+            this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
+
+            this.vote = {
+                name: 'Snorlo',
+                tiny: '12ex',
+                small: '0.2em',
+                medium: '10em',
+                large: '18px',
+                huge: '0.6em'
+            };
+        });
+
+        it.skip('should accept valid votes', async function() {
+            expect(isValid(this.vote)).to.be.true;
+            expect(await this.db.insertVote(this.vote)).not.to.throw();
+        });
+
+        it('should reject missing keys', async function() {
+            for (var key in this.vote) {
+                const value = this.vote[key];
+                this.vote.name += randomPort();
+                delete this.vote[key];
+
+                try {
+                    await this.db.insertVote(this.vote);
+                    expect.fail(db.DBError, Object,
+                                `Vote without column ${ key } should not be `
+                                + 'inserted');
+                }
+                catch (error) {
+                    // Filtering since expect.fail also throws an exception
+                    if (error instanceof DBError) {
+                        expect(error).to.be.instanceof(MissingColumnError);
+                    }
+                }
+                finally {
+                    this.vote[key] = value;
+                }
+            }
+        });
+
+        it.skip('should reject invalid sizes', function() {
+            this.sizes.forEach(size => {
+                const value = this.vote[size];
+                this.vote[size] = 'invalid';
+                expect(isValid(this.vote)).to.be.false;
+                this.vote[size] = value;
+            });
+        });
+    });
+
     describe.skip('GET endpoints', function() {
         before(function() {
             this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
@@ -218,29 +279,6 @@ describe('TDD testing', function() {
                                    .send(this.vote);
 
             expect(resp.status).to.equal(204);
-        });
-    });
-
-    describe.skip('POST endpoint', function() {
-        it('should add a vote for a user', async function() {
-            const user = 'Frænky';
-            const vote = {
-                name: user,
-                tiny: '12ex',
-                small: '0.2em',
-                medium: '10em',
-                large: '18px',
-                huge: '0.6em'
-            };
-
-            const resp = await chai.request(server).post('/vote').send(vote);
-
-            expect(resp.ok).to.be.true;
-            const gotVote = chai.request(server).get(`/vote/${ user }`);
-            const body = gotVote .body;
-
-            expect(gotVote .ok).to.be.true;
-            expect(body).to.eql(vote);
         });
     });
 });

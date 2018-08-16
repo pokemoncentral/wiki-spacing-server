@@ -8,6 +8,15 @@
 const knex = require('knex');
 const type = require('type-detect');
 
+class DBError extends Error {
+    constructor(error, msg) {
+        super(msg || error.error);
+        this.error = error;
+    }
+}
+
+class MissingColumnError extends DBError {}
+
 /**
  *
  */
@@ -68,6 +77,16 @@ class DB {
         };
     }
 
+    static _makeError(dbError) {
+        switch (parseInt(dbError.code)) {
+            case 23502:
+                throw new MissingColumnError(dbError);
+
+            default:
+                throw new DBError(dbError);
+        }
+    }
+
     getAllVotes() {
         return this.knex.union(this.sizes.map(this._getValue.bind(this)))
                         .orderBy('size', 'desc')
@@ -84,7 +103,8 @@ class DB {
         return this.knex.insert(vote)
                         .into('votes')
                         .returning('name')
-                        .then(DB._setCreated(true));
+                        .then(DB._setCreated(true))
+                        .catch(DB._makeError);
     }
 
     async replaceVote(vote) {
@@ -111,7 +131,12 @@ class DB {
  * @param port {number} - The database port.
  * @return {Function} A middleware adding an object to work with the database.
  */
-module.exports = port => async (ctx, next) => {
-    ctx.db = new DB(port);
-    await next();
+module.exports = {
+    middleware: port => async (ctx, next) => {
+        ctx.db = new DB(port);
+        await next();
+    },
+
+    DBError,
+    MissingColumnError
 };

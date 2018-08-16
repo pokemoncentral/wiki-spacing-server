@@ -15,7 +15,7 @@ const args = process.argv.map(a => parseInt(a.trim()));
 const PORT = args[2];
 const DB_PORT = args[3];
 
-app.use(db(DB_PORT));
+app.use(db.middleware(DB_PORT));
 
 app.use(async ctx => {
     ctx.body = 'It works\n';
