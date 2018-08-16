@@ -13,3 +13,6 @@ services:
 
   db:
     image: davla/misc:wiki-spacing-db-test
+
+    logging:
+      driver: 'none'
