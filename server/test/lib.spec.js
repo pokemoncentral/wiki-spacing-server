@@ -101,15 +101,15 @@ describe('Database tests', function() {
         expect(result).to.be.an('Array');
         result.forEach(row => {
             expect(row).to.be.an('Object')
-                       .with.all.keys('size', 'value', 'names');
+                       .with.all.keys('size', 'value', 'voters');
 
             expect(row.size).to.be.a('string')
                             .that.is.oneOf(this.sizes);
 
             expect(row.value).to.be.a('string');
 
-            expect(row.names).to.be.an('Array');
-            row.names.forEach(name => { expect(name).to.be.a('string'); });
+            expect(row.voters).to.be.an('Array');
+            row.voters.forEach(name => { expect(name).to.be.a('string'); });
         })
     });
 });
