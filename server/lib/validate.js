@@ -6,10 +6,6 @@
  */
 
 /**
- * @typedef Object Vote
- */
-
-/**
  * @summary Returns the size names of a vote.
  *
  * @param {Vote} vote - The vote whose size names will be returned.
