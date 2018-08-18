@@ -23,4 +23,4 @@ RUN echo 'wait-for db:$DB_PORT -- "$@"' > /entrypoint.sh
 ENTRYPOINT ["bash", "/entrypoint.sh"]
 
 # Executing server with nodeamon
-CMD ["nodemon", "/usr/src/app", "--", "$WEB_PORT", "$DB_PORT"]
+CMD nodemon /usr/src/app -- "$WEB_PORT" "$DB_PORT"
