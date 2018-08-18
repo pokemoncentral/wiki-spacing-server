@@ -10,8 +10,10 @@ const Promise = require('bluebird');
 
 chai.use(require('chai-as-promised'));
 
-const { DB, MissingColumnError } = require('../lib/db.js');
-const { isValid, validate } = require('../lib/validate.js');
+const util = require('./util');
+
+const { DB, MissingColumnError } = require('../lib/db');
+const { isValid, validate } = require('../lib/validate');
 
 describe('Database tests', function() {
     before(function() {
@@ -97,20 +99,7 @@ describe('Database tests', function() {
 
     it('should return all the votes grouped by value', async function() {
         const result = await this.db.getAllVotes();
-
-        expect(result).to.be.an('Array');
-        result.forEach(row => {
-            expect(row).to.be.an('Object')
-                       .with.all.keys('size', 'value', 'voters');
-
-            expect(row.size).to.be.a('string')
-                            .that.is.oneOf(this.sizes);
-
-            expect(row.value).to.be.a('string');
-
-            expect(row.voters).to.be.an('Array');
-            row.voters.forEach(name => { expect(name).to.be.a('string'); });
-        })
+        util.testVotesGroups.call(this, result);
     });
 });
 

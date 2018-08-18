@@ -9,45 +9,32 @@ const expect = chai.expect;
 
 chai.use(require('chai-http'));
 
-/**
- * @summary Range of valid ports, shifted down by 1024.
- * @type {number}
- */
-const PORT_RANGE = 2 ^ 16 - 1024;
+const util = require('./util');
 
-/**
- * @summary Returns a random valid port number, between 1024 and 65536.
- * @return {number} A valid port number, between 1024 and 65536.
- */
-const randomPort = () => Math.floor(Math.random() * PORT_RANGE + 1024);
+// Changing argv to use a random port for the web server
+util.setArgv();
 
-// Changing argv to use random ports
-const PORT = randomPort();
-process.argv[2] = PORT.toString();
-process.argv[3] = process.env.DB_PORT;
-
-const server = require('../index.js');
+const server = require('../index');
 
 describe('CLI parameters', function() {
+    const PORT = parseInt(process.argv[2]);
     it('should listen on the passed port', async function() {
         const resp = await chai.request(`http://localhost:${ PORT }`)
                                .get('/');
 
         expect(resp).to.be.an('Object')
-                    .with.property('ok', true);
+                    .with.property('statusCode', 404);
     });
 
     it('should be able to connect to the database', async function() {
-        const resp = await chai.request(server).get('/');
+        const resp = await chai.request(server).get('/votes/groups');
 
         expect(resp).to.be.an('Object')
                     .with.property('ok', true);
-        expect(resp.body).to.be.an('Object')
-                         .that.not.has.property('error');
     });
 });
 
-describe.skip('GET endpoints', function() {
+describe('GET endpoints', function() {
     before(function() {
         this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
     });
@@ -55,23 +42,14 @@ describe.skip('GET endpoints', function() {
     it('should retrieve the whole list of votes, grouped by vote',
             async function() {
         const resp = await chai.request(server).get('/votes/groups');
-        const body = resp.body;
 
-        expect(resp.ok).to.be.true;
-        expect(body).to.have.all.keys(this.sizes);
-        this.sizes.forEach(size => {
-            expect(size).to.have.all.keys('value', 'voters');
-            expect(size.value).to.be.a('string');
-            expect(size.voters).to.be.an('array');
-            size.voters.forEach(voter => expect(voter).to.be.a('string'));
-
-            // Sizes should start with a number
-            expect(size.value.match(/^\d+\.?\d*/)).not.to.be.null;
-        });
+        expect(resp).to.be.an('Object')
+                    .with.property('body');
+        util.testVotesGroups.call(this, resp.body);
     });
 });
 
-describe.skip('PUT endpoints', function() {
+describe('PUT endpoints', function() {
     before(async function() {
         this.user = 'Frænky';
         this.vote = {
@@ -84,7 +62,7 @@ describe.skip('PUT endpoints', function() {
         };
     });
 
-    it('should reject invalid input', async function() {
+    it.skip('should reject invalid input', async function() {
         const user = 'Flavìo';
         this.vote.name = user;
         this.vote.medium = '10';
@@ -102,7 +80,6 @@ describe.skip('PUT endpoints', function() {
     });
 
     it('should replace or create a vote', async function() {
-
         const resp = await chai.request(server).put(`/vote/${ this.user }`)
                                .send(this.vote);
 
