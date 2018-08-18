@@ -9,9 +9,9 @@ grant all on database spacing to wiki;
 \connect spacing wiki;
 create table votes (
     name        text    primary key,
-    tiny        text    not null,
-    small       text    not null,
-    medium      text    not null,
-    large       text    not null,
-    huge        text    not null
+    tiny        text,
+    small       text,
+    medium      text,
+    large       text,
+    huge        text
 );

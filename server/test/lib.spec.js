@@ -6,7 +6,6 @@
 
 const chai = require('chai');
 const expect = chai.expect;
-const Promise = require('bluebird');
 
 chai.use(require('chai-as-promised'));
 
@@ -121,20 +120,14 @@ describe('Input validation', function() {
         expect(isValid(this.vote)).to.be.true;
         expect(validate(this.vote)).to.be.an('Array')
                                    .that.is.empty;
-        return expect(this.db.insertVote(this.vote)).to.be.fulfilled;
     });
 
-    it('should reject missing keys', function() {
-        return Promise.all(
-            Object.keys(this.vote).map(key => {
-                const vote = Object.assign({}, this.vote);
-                vote.name += Math.random();
-                delete vote[key];
+    it('should reject a vote with no name', function() {
+        const vote = Object.assign({}, this.vote);
+        delete vote.name;
 
-                return expect(this.db.insertVote(vote))
-                    .to.be.rejectedWith(MissingColumnError);
-            })
-        );
+        return expect(this.db.insertVote(vote))
+            .to.be.rejectedWith(MissingColumnError);
     });
 
     it('should reject invalid sizes', function() {

@@ -59,9 +59,9 @@ class DB {
 
 
     /**
-     * This method returns a query that groups the values of a certain size,
-     * projecting the value, the size and the collection of the names who
-     * voted for that size.
+     * This method returns a query that groups non-null values of a certain
+     * size, projecting the value, the size and the collection of the names
+     * who voted for that size.
      *
      * The query is not returned directly, but rather wrapped in a function,
      * since it is meant to be used as argument for the knex.union() method.
@@ -86,6 +86,7 @@ class DB {
         return function() {
             return this.select(projection)
                        .from('votes')
+                       .whereNotNull(sizeName)
                        .groupBy(sizeName);
         }
     }
