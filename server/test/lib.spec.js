@@ -18,8 +18,6 @@ describe('Database tests', function() {
     before(function() {
         this.db = new DB(parseInt(process.env.DB_PORT));
 
-        this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
-
         this.user0 = 'Frænky';
         this.user1 = 'Flavìo';
 
@@ -116,10 +114,31 @@ describe('Input validation', function() {
         };
     });
 
+    it('should reject invalid sizes', function() {
+        const invalidSizes = [
+            ['1.em', 'Invalid CSS number'],
+            ['9.2ef', 'Invalid unit of measure'],
+            ['.2', 'No unit of measure'],
+            ['', 'Empty size'],
+            ['.9ex .3em .1rem', 'More than two sizes'],
+            ['2.5em, 1.8ex', 'Non space-separated sizes']
+        ];
+
+        invalidSizes.forEach(([size, reason]) => {
+            const errorMsg = `${ size }: ${ reason }`;
+            const vote = Object.assign({}, this.vote);
+            vote.medium = size;
+
+            expect(isValidVote(vote), errorMsg).to.be.false;
+            expect(validateVote(vote), errorMsg).to.be.an('Array')
+                                                .that.eqls(['medium']);
+        });
+    });
+
     it('should accept valid votes', function() {
         expect(isValidVote(this.vote)).to.be.true;
         expect(validateVote(this.vote)).to.be.an('Array')
-                                   .that.is.empty;
+                                       .that.is.empty;
     });
 
     it('should not insert a vote with no name', function() {
@@ -144,26 +163,5 @@ describe('Input validation', function() {
 
         return expect(this.db.replaceVote(vote))
             .to.be.rejectedWith(DBError);
-    });
-
-    it('should reject invalid sizes', function() {
-        const invalidSizes = [
-            ['1.em', 'Invalid CSS number'],
-            ['9.2ef', 'Invalid unit of measure'],
-            ['.2', 'No unit of measure'],
-            ['', 'Empty size'],
-            ['.9ex .3em .1rem', 'More than two sizes'],
-            ['2.5em, 1.8ex', 'Non space-separated sizes']
-        ];
-
-        invalidSizes.forEach(([size, reason]) => {
-            const errorMsg = `${ size }: ${ reason }`;
-            const vote = Object.assign({}, this.vote);
-            vote.medium = size;
-
-            expect(isValidVote(vote), errorMsg).to.be.false;
-            expect(validateVote(vote), errorMsg).to.be.an('Array')
-                                            .that.eqls(['medium']);
-        });
     });
 });

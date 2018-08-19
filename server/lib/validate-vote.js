@@ -1,6 +1,7 @@
 /**
  * @fileoverview This file contains code to validate votes. The presence of
- * all keys is deferred to database insertion, relying on schema constraints.
+ * the voter's name is deferred to database insertion, relying on schema
+ * constraints.
  *
  * Created by Davide on 8/15/18.
  */

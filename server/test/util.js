@@ -45,13 +45,15 @@ const setArgv = () => {
     suite context.
 */
 const testVotesGroups = function(groups) {
+    const sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
+
     expect(groups).to.be.an('Array');
     groups.forEach(row => {
         expect(row).to.be.an('Object')
                    .with.all.keys('size', 'value', 'voters');
 
         expect(row.size).to.be.a('string')
-                        .that.is.oneOf(this.sizes);
+                        .that.is.oneOf(sizes);
 
         expect(row.value).to.be.a('string');
 

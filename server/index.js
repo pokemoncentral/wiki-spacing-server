@@ -6,7 +6,7 @@
 
 const Koa = require('koa');
 
-const middlewares = require('./middleware');
+const middleware = require('./middleware');
 
 const app = new Koa();
 
@@ -27,7 +27,7 @@ const args = process.argv.map(a => parseInt(a.trim()));
 const PORT = args[2];
 const DB_PORT = args[3];
 
-app.use(middlewares({
+app.use(middleware({
     dbPort: DB_PORT
 }));
 

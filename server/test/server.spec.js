@@ -17,8 +17,8 @@ util.setArgv();
 const server = require('../index');
 
 describe('CLI parameters', function() {
-    const PORT = parseInt(process.argv[2]);
     it('should listen on the passed port', async function() {
+        const PORT = parseInt(process.argv[2]);
         const resp = await chai.request(`http://localhost:${ PORT }`)
                                .get('/');
 
@@ -35,12 +35,7 @@ describe('CLI parameters', function() {
 });
 
 describe('GET endpoints', function() {
-    before(function() {
-        this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
-    });
-
-    it('should retrieve the whole list of votes, grouped by vote',
-            async function() {
+    it('should return all the votes grouped by value', async function() {
         const resp = await chai.request(server).get('/votes/groups');
 
         expect(resp).to.be.an('Object')
