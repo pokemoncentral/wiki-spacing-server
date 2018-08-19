@@ -118,16 +118,18 @@ class DB {
     }
 
     /**
-     * This method remaps database error objects. It throws a custom exception,
-     * based on the error code of the error as returned by the database.
+     * This method remaps database error objects and knex Errors. It throws a
+     * custom exception, based on the error code of the error as returned by
+     * the database. Knex Errors are just wrapped in the custom exception.
      *
      * @private
-     * @summary Remaps database errors to custom exceptions.
+     * @summary Remaps database and knex errors to custom exceptions.
      *
-     * @param {Object} dbError - The error as thrown by the database.
+     * @param {Object|Error} dbError - The database error object or a knex
+     *      Error.
      *
      * @throws {MissingColumnError} For error code: 23502 - not_null_violation.
-     * @throws {DBError} For any other error code.
+     * @throws {DBError} For any other error code and knex Errors.
      */
     static _makeError(dbError) {
         switch (parseInt(dbError.code)) {
@@ -135,8 +137,7 @@ class DB {
                 throw new MissingColumnError(dbError);
 
             default:
-                throw new DBError(dbError,
-                    dbError.error || dbError.toString());
+                throw new DBError(dbError);
         }
     }
 
@@ -234,13 +235,19 @@ class DB {
 class DBError extends Error {
 
     /**
+     * The error can be a plain Object, that is expected to be a database
+     * error, or an Error instance. In the former case, error.error is used as
+     * default value for the message; otherwise, error.message is used.
+     *
      * @summary Creates a DBError.
      *
-     * @param {object} error - The database error object.
-     * @param {string} [msg=error.error] - The error message.
+     * @param {Object|Error} error - The database error object.
+     * @param {string} [msg] - The error message. Defaults to error.message or
+     *      error.error, depending which one is available.
      */
     constructor(error, msg) {
-        super(msg || error.error);
+        msg = msg || (error instanceof Error ? error.message : error.error);
+        super(msg);
 
         /**
          * @summary The database error object.

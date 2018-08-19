@@ -11,7 +11,7 @@ chai.use(require('chai-as-promised'));
 
 const util = require('./util');
 
-const { DB, MissingColumnError } = require('../lib/db');
+const { DB, DBError, MissingColumnError } = require('../lib/db');
 const { isValidVote, validateVote } = require('../lib/validate-vote');
 
 describe('Database tests', function() {
@@ -122,12 +122,28 @@ describe('Input validation', function() {
                                    .that.is.empty;
     });
 
-    it('should reject a vote with no name', function() {
+    it('should not insert a vote with no name', function() {
         const vote = Object.assign({}, this.vote);
         delete vote.name;
 
         return expect(this.db.insertVote(vote))
             .to.be.rejectedWith(MissingColumnError);
+    });
+
+    it('should not update a vote with no name', function() {
+        const vote = Object.assign({}, this.vote);
+        delete vote.name;
+
+        return expect(this.db.updateVote(vote))
+            .to.be.rejectedWith(DBError);
+    });
+
+    it('should not replace a vote with no name', function() {
+        const vote = Object.assign({}, this.vote);
+        delete vote.name;
+
+        return expect(this.db.replaceVote(vote))
+            .to.be.rejectedWith(DBError);
     });
 
     it('should reject invalid sizes', function() {
