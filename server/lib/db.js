@@ -221,7 +221,7 @@ class DB {
         return this.knex.update(vote)
                         .from('votes')
                         .where('name', vote.name)
-                        .returning('name')
+                        .returning('*')
                         .then(DB._setCreated(false))
                         .catch(DB._makeError);
     }

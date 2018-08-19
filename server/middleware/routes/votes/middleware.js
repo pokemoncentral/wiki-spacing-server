@@ -11,7 +11,7 @@ const { validateVote } = require('../../../lib/validate-vote');
 const add = async (ctx, next) => {
     // is it valid json?
     ctx.vote = ctx.request.body;
-    ctx.vote.name = ctx.params.voter;
+    ctx.vote.name = decodeURIComponent(ctx.params.voter);
     await next();
 };
 
@@ -25,7 +25,39 @@ const validate = async (ctx, next) => {
     await next();
 };
 
-module.exports = koaCompose([
-    add,
-    validate
-]);
+
+const addMissingSizes = async (ctx, next) => {
+    const emptyVote = {
+        tiny: null,
+        small: null,
+        medium: null,
+        large: null,
+        huge: null
+    };
+    ctx.vote = Object.assign(emptyVote, ctx.vote);
+
+    await next();
+};
+
+const noUser = async (ctx, next) => {
+    if (!ctx.body) {
+        ctx.throw(404, 'User not found', {body: {user: ctx.params.voter}});
+    }
+
+    await next();
+};
+
+module.exports = {
+    noUser,
+
+    withVote: koaCompose([
+        add,
+        validate
+    ]),
+
+    withFullVote: koaCompose([
+        add,
+        validate,
+        addMissingSizes
+    ])
+};
