@@ -135,7 +135,8 @@ class DB {
                 throw new MissingColumnError(dbError);
 
             default:
-                throw new DBError(dbError);
+                throw new DBError(dbError,
+                    dbError.error || dbError.toString());
         }
     }
 

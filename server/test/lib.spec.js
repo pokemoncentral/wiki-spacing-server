@@ -12,7 +12,7 @@ chai.use(require('chai-as-promised'));
 const util = require('./util');
 
 const { DB, MissingColumnError } = require('../lib/db');
-const { isValid, validate } = require('../lib/validate');
+const { isValidVote, validateVote } = require('../lib/validate-vote');
 
 describe('Database tests', function() {
     before(function() {
@@ -117,8 +117,8 @@ describe('Input validation', function() {
     });
 
     it('should accept valid votes', function() {
-        expect(isValid(this.vote)).to.be.true;
-        expect(validate(this.vote)).to.be.an('Array')
+        expect(isValidVote(this.vote)).to.be.true;
+        expect(validateVote(this.vote)).to.be.an('Array')
                                    .that.is.empty;
     });
 
@@ -145,8 +145,8 @@ describe('Input validation', function() {
             const vote = Object.assign({}, this.vote);
             vote.medium = size;
 
-            expect(isValid(vote), errorMsg).to.be.false;
-            expect(validate(vote), errorMsg).to.be.an('Array')
+            expect(isValidVote(vote), errorMsg).to.be.false;
+            expect(validateVote(vote), errorMsg).to.be.an('Array')
                                             .that.eqls(['medium']);
         });
     });

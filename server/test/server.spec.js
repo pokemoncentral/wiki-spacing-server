@@ -53,55 +53,63 @@ describe('PUT endpoints', function() {
     before(async function() {
         this.user = 'Frænky';
         this.vote = {
-            name: this.user,
             tiny: '12ex',
             small: '0.2em',
             medium: '10em',
-            large: '18px',
+            large: '18rem',
             huge: '0.6em'
         };
     });
 
-    it.skip('should reject invalid input', async function() {
-        const user = 'Flavìo';
-        this.vote.name = user;
-        this.vote.medium = '10';
-        delete this.vote.huge;
-
-        const resp = await chai.request(server).put(`/vote/${ user }`)
-                               .send(this.vote);
-        const body = resp.body;
-
-        expect(resp.ok).to.be.false;
-        expect(body).to.have.all.keys('error');
-        expect(body.error).to.have.all.keys('code', 'message');
-        expect(body.error.code).to.equal(12);
-        expect(body.error.message).to.equal('Invalid input');
-    });
-
     it('should replace or create a vote', async function() {
-        const resp = await chai.request(server).put(`/vote/${ this.user }`)
+        const resp = await chai.request(server).put(`/votes/${ this.user }`)
                                .send(this.vote);
 
-        expect(resp.status).to.be.oneOf([201, 204]);
+        expect(resp).to.be.an('Object')
+                    .with.property('statusCode')
+                    .that.is.oneOf([201, 204]);
+        expect(resp).to.have.property('body')
+                    .that.is.empty;
     });
 
     it('should replace a vote for an existing user', async function() {
-        this.vote.small = '25em';
-
-        const resp = await chai.request(server).put(`/vote/${ this.user }`)
+        const resp = await chai.request(server).put(`/votes/${ this.user }`)
                                .send(this.vote);
 
-        expect(resp.status).to.equal(201);
+        expect(resp).to.be.an('Object')
+                    .with.property('statusCode')
+                    .that.equals(204);
+        expect(resp).to.have.property('body')
+                    .that.is.empty;
     });
 
     it('should create a vote for a non existing user', async function() {
-        const user = this.user + randomPort().toString();
-        this.vote.name = user;
+        const user = this.user + Math.random().toString();
 
-        const resp = await chai.request(server).put(`/vote/${ user }`)
+        const resp = await chai.request(server).put(`/votes/${ user }`)
                                .send(this.vote);
 
-        expect(resp.status).to.equal(204);
+        expect(resp).to.be.an('Object')
+                    .with.property('statusCode')
+                    .that.equals(201);
+        expect(resp).to.have.property('body')
+                    .that.is.empty;
+    });
+
+    it('should reject invalid input', async function() {
+        this.vote.medium = '10';
+
+        const resp = await chai.request(server).put(`/votes/${ this.user }`)
+                               .send(this.vote);
+
+        expect(resp).to.be.an('Object')
+                    .with.property('ok', false);
+
+        expect(resp.body).to.be.an('Object');
+        expect(resp.body).to.have.property('error')
+                         .that.is.a('string');
+        expect(resp.body).to.have.property('invalidSizes')
+                         .that.is.an('Array')
+                         .that.eqls(['medium']);
     });
 });

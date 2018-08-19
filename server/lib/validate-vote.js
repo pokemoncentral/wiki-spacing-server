@@ -36,7 +36,7 @@ const validSize = size => /^(\d*\.?\d+\s*(em|ex|rem)\s*){1,2}$/.test(size);
  * @param {Vote} vote - The vote that will be validated.
  * @return {string[]} The size names whose size value is invalid.
  */
-const validate = (vote) =>
+const validateVote = (vote) =>
     getSizes(vote)
         .filter(size => !validSize(vote[size]));
 
@@ -46,12 +46,12 @@ const validate = (vote) =>
  * @param {Vote} vote - The vote that will be validated.
  * @returns {boolean} Whether all the sizes in vote are valid.
  */
-const isValid = (vote) =>
+const isValidVote = (vote) =>
     getSizes(vote)
         .map(size => vote[size])
         .every(validSize);
 
 module.exports = {
-    isValid,
-    validate,
+    isValidVote,
+    validateVote,
 };
