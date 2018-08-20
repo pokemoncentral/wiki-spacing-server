@@ -9,10 +9,10 @@ const expect = chai.expect;
 
 chai.use(require('chai-http'));
 
-const util = require('./util');
+const { clearDb, setArgv, testVotesGroups } = require('./util');
 
 // Changing argv to use a random port for the web server
-util.setArgv();
+setArgv();
 
 const server = require('../index');
 
@@ -35,8 +35,8 @@ describe('CLI parameters', function() {
     });
 });
 
-describe('PUT endpoints', function() {
-    before(async function() {
+describe('GET endpoints', function() {
+    before(function() {
         this.user = encodeURIComponent('Bany');
         this.vote = {
             tiny: '12ex',
@@ -47,86 +47,172 @@ describe('PUT endpoints', function() {
         };
     });
 
-    it('should replace or create a vote', async function() {
+    beforeEach(async function() {
         const resp = await chai.request(server)
                                .put(`/votes/${ this.user }`)
                                .send(this.vote);
-
         expect(resp).to.be.an('Object')
-                    .with.property('statusCode')
-                    .that.is.oneOf([201, 204]);
-        expect(resp).to.have.property('body')
-                    .that.is.empty;
+                    .with.property('ok', true);
     });
 
-    it('should replace a vote for an existing user', async function() {
-        const resp = await chai.request(server)
-                               .put(`/votes/${ this.user }`)
-                               .send(this.vote);
-
-        expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 204);
-        expect(resp).to.have.property('body')
-                    .that.is.empty;
+    afterEach(function() {
+        return clearDb();
     });
 
-    it('should create a vote for a non existing user', async function() {
-        const user = this.user + Math.random().toString();
+    describe('/votes', function() {
+        beforeEach(async function() {
+            const user = this.user + Math.random().toString();
+            const vote = Object.assign({}, this.vote);
+            vote.huge = '5ex';
+            vote.small = '0.3ex';
 
-        const resp = await chai.request(server)
-                               .put(`/votes/${ user }`)
-                               .send(this.vote);
+            const resp = await chai.request(server)
+                                   .put(`/votes/${ user }`)
+                                   .send(vote);
+            expect(resp).to.be.an('Object')
+                        .with.property('ok', true);
+        });
 
-        expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 201);
-        expect(resp).to.have.property('body')
-                    .that.is.empty;
+        it('should return all the votes grouped by value', async function() {
+            const resp = await chai.request(server)
+                                   .get('/votes');
+
+            expect(resp).to.be.an('Object')
+                        .with.property('body');
+            testVotesGroups.call(this, resp.body);
+        });
+
+        it('should reply with 204 when there are no votes', async function() {
+            /* ************************ Setup ************************ */
+
+            await clearDb();
+
+            /* ************************ Tests ************************ */
+
+            const resp = await chai.request(server)
+                                   .get('/votes');
+
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode', 204);
+            expect(resp).to.have.property('body')
+                        .that.is.empty;
+        });
     });
 
-    it('should nullify missing keys', async function() {
-        const vote = Object.assign({}, this.vote);
-        delete vote.large;
+    describe('/votes/:voter', function() {
+        it('should fetch the vote of a single user', async function() {
+            const resp = await chai.request(server)
+                                   .get(`/votes/${ this.user }`);
+            expect(resp).to.be.an('Object')
+                        .with.property('body')
+                        .that.is.an('Object');
 
-        const resp = await chai.request(server)
-                               .put(`/votes/${ this.user }`)
-                               .send(vote);
+            const vote = resp.body;
 
-        expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 204);
-        expect(resp).to.have.property('body')
-                    .that.is.empty;
+            expect(vote).to.have.property('name', this.user);
 
-        const fetchedVote = await chai.request(server)
-                                      .get(`/votes/${ this.user }`);
+            delete vote.name;
 
-        expect(fetchedVote).to.be.an('Object')
-                           .with.property('body');
-        expect(fetchedVote.body).to.be.an('Object')
-                                .with.property('large', null);
-    });
+            expect(vote).to.eql(this.vote);
+        });
 
-    it('should reject invalid input', async function() {
-        this.vote.medium = '10';
+        it('should reply with a 404 for non-existing users', async function() {
+            /* ************************ Setup ************************ */
 
-        const resp = await chai.request(server)
-                               .put(`/votes/${ this.user }`)
-                               .send(this.vote);
+            await clearDb();
 
-        expect(resp).to.be.an('Object')
-                    .with.property('ok', false);
+            /* ************************ Tests ************************ */
 
-        expect(resp.body).to.be.an('Object');
-        expect(resp.body).to.have.property('error')
-                         .that.is.a('string');
-        expect(resp.body).to.have.property('invalidSizes')
-                         .that.is.an('Array')
-                         .that.eqls(['medium']);
+            const resp = await chai.request(server)
+                                   .get(`/votes/${ this.user }`);
+
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode', 404);
+            expect(resp.body).to.be.an('Object')
+                             .with.property('user', this.user);
+        });
     });
 });
 
 describe('PATCH endpoints', function() {
     before(function() {
         this.user = encodeURIComponent('Bany');
+    });
+
+    beforeEach(async function() {
+        /*
+            The vote is often modified in-place within tests, so a new one is
+            needed each time
+        */
+        this.vote = {
+            tiny: '12ex',
+            small: '0.2em',
+            medium: '10em',
+            large: '18rem',
+            huge: '0.6em'
+        };
+
+        const resp = await chai.request(server)
+                               .put(`/votes/${ this.user }`)
+                               .send(this.vote);
+        expect(resp).to.be.an('Object')
+                    .with.property('ok', true);
+    });
+
+    afterEach(function() {
+        return clearDb();
+    });
+
+    describe('/votes/:voter', function() {
+        it('should only change defined keys', async function() {
+            const patch = Object.assign({}, this.vote);
+            patch.tiny = '0.2em';
+            patch.large = '0.7em';
+            delete patch.small;
+            delete patch.medium;
+            delete patch.huge;
+
+            Object.assign(this.vote, patch);
+
+            const resp = await chai.request(server)
+                                   .patch(`/votes/${ this.user }`)
+                                   .send(patch);
+
+            expect(resp).to.be.an('Object')
+                        .with.property('ok', true);
+            expect(resp).to.have.property('body')
+                        .that.is.an('Object').that.eqls(this.vote);
+        });
+
+        it('should reply with a 404 for non-existing users', async function() {
+            /* ************************ Setup ************************ */
+
+            await clearDb();
+
+            /* ************************ Tests ************************ */
+
+            const resp = await chai.request(server)
+                                   .patch(`/votes/${ this.user }`)
+                                   .send(this.vote);
+
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode', 404);
+            expect(resp.body).to.be.an('Object')
+                             .with.property('user', this.user);
+        });
+    });
+});
+
+describe('PUT endpoints', function() {
+    before(function() {
+        this.user = encodeURIComponent('Bany');
+    });
+
+    beforeEach(async function() {
+        /*
+            The vote is often modified in-place within tests, so a new one is
+            needed each time
+        */
         this.vote = {
             tiny: '12ex',
             small: '0.2em',
@@ -136,83 +222,101 @@ describe('PATCH endpoints', function() {
         };
     });
 
-    it('should only change defined keys', async function() {
-        const insertResp = await chai.request(server)
-                                     .put(`/votes/${ this.user }`)
-                                     .send(this.vote);
-
-        expect(insertResp).to.be.an('Object')
-                          .with.property('ok', true);
-        expect(insertResp).to.have.property('body')
-                          .that.is.empty;
-
-        const vote = Object.assign({}, this.vote);
-        vote.tiny = '0.2em';
-        vote.large = '0.7em';
-        delete vote.small;
-        delete vote.medium;
-        delete vote.huge;
-
-        const resp = await chai.request(server)
-                               .patch(`/votes/${ this.user }`)
-                               .send(vote);
-
-        const resultVote = Object.assign({}, this.vote);
-        Object.assign(resultVote, vote);
-
-        expect(resp).to.be.an('Object')
-                    .with.property('ok', true);
-        expect(resp).to.have.property('body')
-                    .that.is.an('Object').that.eqls(resultVote);
+    afterEach(function() {
+        return clearDb();
     });
 
-    it('should reply with a 404 for non-existing users', async function() {
-        this.user += Math.random().toString();
-        const resp = await chai.request(server)
-                               .patch(`/votes/${ this.user }`)
-                               .send(this.vote);
+    describe('/votes/:voter', function() {
+        it('should replace or create a vote', async function() {
+            const resp = await chai.request(server)
+                                   .put(`/votes/${ this.user }`)
+                                   .send(this.vote);
 
-        expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 404);
-        expect(resp.body).to.be.an('Object')
-                         .with.property('user', this.user);
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode')
+                        .that.is.oneOf([201, 204]);
+            expect(resp).to.have.property('body')
+                        .that.is.empty;
+        });
 
-    });
-});
+        it('should replace a vote for an existing user', async function() {
+            /* ************************ Setup ************************ */
 
-describe('GET endpoints', function() {
-    before(function() {
-        this.user = encodeURIComponent('Bany');
-        this.sizes = ['tiny', 'small', 'medium', 'large', 'huge'];
-    });
+            const insertResp = await chai.request(server)
+                                         .put(`/votes/${ this.user }`)
+                                         .send(this.vote);
 
-    it('should fetch the vote of a single user', async function() {
-        const resp = await chai.request(server)
-                               .get(`/votes/${ this.user }`);
+            expect(insertResp).to.be.an('Object')
+                              .with.property('ok', true);
 
-        expect(resp).to.be.an('Object')
-                    .with.property('body');
-        expect(resp.body).to.be.an('Object')
-                         .that.has.all.keys(this.sizes.concat(['name']));
-    });
+            /* ************************ Tests ************************ */
 
-    it('should reply with a 404 for non-existing users', async function() {
-        this.user += Math.random().toString();
-        const resp = await chai.request(server)
-                               .get(`/votes/${ this.user }`);
+            const resp = await chai.request(server)
+                                   .put(`/votes/${ this.user }`)
+                                   .send(this.vote);
 
-        expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 404);
-        expect(resp.body).to.be.an('Object')
-                         .with.property('user', this.user);
-    });
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode', 204);
+            expect(resp).to.have.property('body')
+                        .that.is.empty;
+        });
 
-    it('should return all the votes grouped by value', async function() {
-        const resp = await chai.request(server)
-                               .get('/votes');
+        it('should create a vote for a non existing user', async function() {
+            const resp = await chai.request(server)
+                                   .put(`/votes/${ this.user }`)
+                                   .send(this.vote);
 
-        expect(resp).to.be.an('Object')
-                    .with.property('body');
-        util.testVotesGroups.call(this, resp.body);
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode', 201);
+            expect(resp).to.have.property('body')
+                        .that.is.empty;
+        });
+
+        it('should nullify missing keys', async function() {
+            /* ************************ Setup ************************ */
+
+            const insertResp = await chai.request(server)
+                                         .put(`/votes/${ this.user }`)
+                                         .send(this.vote);
+
+            expect(insertResp).to.be.an('Object')
+                              .with.property('ok', true);
+
+            /* ************************ Tests ************************ */
+
+            delete this.vote.large;
+            const resp = await chai.request(server)
+                                   .put(`/votes/${ this.user }`)
+                                   .send(this.vote);
+
+            expect(resp).to.be.an('Object')
+                        .with.property('ok', true);
+
+            const fetchedVote = await chai.request(server)
+                                          .get(`/votes/${ this.user }`);
+
+            expect(fetchedVote).to.be.an('Object')
+                               .with.property('body');
+            expect(fetchedVote.body).to.be.an('Object')
+                                    .with.property('large', null);
+        });
+
+        it('should reject invalid input', async function() {
+            this.vote.medium = '10';
+
+            const resp = await chai.request(server)
+                                   .put(`/votes/${ this.user }`)
+                                   .send(this.vote);
+
+            expect(resp).to.be.an('Object')
+                        .with.property('statusCode', 400);
+
+            expect(resp.body).to.be.an('Object');
+            expect(resp.body).to.have.property('error')
+                             .that.is.a('string');
+            expect(resp.body).to.have.property('invalidSizes')
+                             .that.is.an('Array')
+                             .that.eqls(['medium']);
+        });
     });
 });

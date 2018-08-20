@@ -9,7 +9,7 @@ const expect = chai.expect;
 
 chai.use(require('chai-as-promised'));
 
-const util = require('./util');
+const { clearDb, testVotesGroups } = require('./util');
 
 const { DB, DBError, MissingColumnError } = require('../lib/db');
 const { isValidVote, validateVote } = require('../lib/validate-vote');
@@ -17,12 +17,15 @@ const { isValidVote, validateVote } = require('../lib/validate-vote');
 describe('Database tests', function() {
     before(function() {
         this.db = new DB(parseInt(process.env.DB_PORT));
+    });
 
-        this.user0 = 'Frænky';
-        this.user1 = 'Flavìo';
-
+    beforeEach(function() {
+        /*
+            The vote is often modified in-place within tests, so a new one is
+            needed each time
+        */
         this.vote = {
-            name: this.user0,
+            name: 'Frænky',
             tiny: '12ex',
             small: '0.2em',
             medium: '10em',
@@ -31,79 +34,144 @@ describe('Database tests', function() {
         };
     });
 
-    it('should insert a vote', async function() {
-        const result = await this.db.insertVote(this.vote);
-
-        expect(result).to.be.an('Object')
-                      .with.property('created', true);
-
-        const vote = await this.db.getVote(this.vote.name);
-
-        expect(vote).to.eql(this.vote);
+    afterEach(function() {
+        return clearDb();
     });
 
-    it('should fetch a vote', async function() {
-        const vote = await this.db.getVote(this.vote.name);
+    describe('getVote()', function() {
+        beforeEach(function() {
+            return expect(this.db.insertVote(this.vote)).to.be.fulfilled;
+        });
 
-        expect(vote).to.eql(this.vote);
+        it('should fetch a vote', function() {
+            return expect(this.db.getVote(this.vote.name))
+                .to.eventually.eql(this.vote);
+        });
+
+        it('should return undefined for non-existing users', async function() {
+            /* ************************ Setup ************************ */
+
+            await clearDb();
+
+            /* ************************ Tests ************************ */
+
+            const vote = await this.db.getVote(this.vote.name);
+
+            expect(vote).to.be.undefined;
+        });
     });
 
-    it('should replace a vote', async function() {
-        this.vote.huge = '27em';
-        const result = await this.db.updateVote(this.vote);
+    describe('getAllVotes()', function() {
+        beforeEach(async function() {
+            await expect(this.db.insertVote(this.vote)).to.be.fulfilled;
 
-        expect(result).to.be.an('Object')
-                      .with.property('created', false);
+            const vote = Object.assign({}, this.vote);
+            vote.name += Math.random().toString();
+            vote.huge = '5ex';
+            vote.small = '0.3ex';
 
-        const vote = await this.db.getVote(this.vote.name);
+            await expect(this.db.insertVote(vote)).to.be.fulfilled;
+        });
 
-        expect(vote).to.eql(this.vote);
+        it('should return all the votes grouped by value', async function() {
+            const result = await this.db.getAllVotes();
+            testVotesGroups.call(this, result);
+        });
+
+        it('should return an empty array when there are no votes',
+                async function() {
+            /* ************************ Setup ************************ */
+
+            await clearDb();
+
+            /* ************************ Tests ************************ */
+
+            const vote = await this.db.getAllVotes();
+
+            expect(vote).to.be.empty;
+        });
     });
 
-    it('should only replace the supplied values of a vote', async function() {
-        this.vote.huge = '2em';
-        const incompleteVote = Object.assign({}, this.vote);
-        delete incompleteVote.tiny;
+    describe('insertVote()', function() {
+        it('should insert a vote', async function() {
+            const result = await this.db.insertVote(this.vote);
 
-        const result = await this.db.updateVote(incompleteVote);
+            expect(result).to.be.an('Object')
+                          .with.property('created', true);
 
-        expect(result).to.be.an('Object')
-                      .with.property('created', false);
+            const vote = await this.db.getVote(this.vote.name);
 
-        const fetchedVote = await this.db.getVote(this.vote.name);
-
-        expect(fetchedVote).to.eql(this.vote);
+            expect(vote).to.eql(this.vote);
+        });
     });
 
-    it('should create the vote of a non-existing user', async function() {
-        this.vote.name = this.user1;
+    describe('replaceVote()', function() {
+        it('should create the vote of a non-existing user', function() {
+            return expect(this.db.replaceVote(this.vote))
+                .to.eventually.be.an('Object')
+                .with.property('created', true);
+        });
 
-        const result = await this.db.replaceVote(this.vote);
+        it('should update the vote of an existing user', async function() {
+            /* ************************ Setup ************************ */
 
-        expect(result).to.be.an('Object')
-                      .with.property('created', true);
+            await expect(this.db.insertVote(this.vote)).to.be.fulfilled;
+
+            /* ************************ Tests ************************ */
+
+            this.vote.tiny = '0.001ex';
+
+            const result = await this.db.replaceVote(this.vote);
+
+            expect(result).to.be.an('Object')
+                          .with.property('created', false);
+        });
     });
 
-    it('should update the vote of an existing user', async function() {
-        this.vote.name = this.user1;
-        this.vote.tiny = '0.001ex';
+    describe('updateVote()', function() {
+        beforeEach(function() {
+            return expect(this.db.insertVote(this.vote)).to.be.fulfilled;
+        });
 
-        const result = await this.db.replaceVote(this.vote);
+        it('should change a vote', async function() {
+            this.vote.huge = '27em';
+            const result = await this.db.updateVote(this.vote);
 
-        expect(result).to.be.an('Object')
-                      .with.property('created', false);
-    });
+            expect(result).to.be.an('Object')
+                          .with.property('created', false);
 
-    it('should return all the votes grouped by value', async function() {
-        const result = await this.db.getAllVotes();
-        util.testVotesGroups.call(this, result);
+            const vote = await this.db.getVote(this.vote.name);
+
+            expect(vote).to.eql(this.vote);
+        });
+
+        it('should not touch undefined sizes', async function() {
+            this.vote.huge = '2em';
+            const incompleteVote = Object.assign({}, this.vote);
+            delete incompleteVote.tiny;
+
+            const result = await this.db.updateVote(incompleteVote);
+
+            expect(result).to.be.an('Object')
+                          .with.property('created', false);
+
+            const fetchedVote = await this.db.getVote(this.vote.name);
+
+            expect(fetchedVote).to.eql(this.vote);
+        });
     });
 });
 
 describe('Input validation', function() {
     before(function() {
         this.db = new DB(parseInt(process.argv[3]));
+    });
 
+    beforeEach(function() {
+        /*
+            The vote is often modified in-place within tests, so a new one is
+            needed each time
+        */
         this.vote = {
             name: 'Snorlo',
             tiny: '12ex',
@@ -114,7 +182,11 @@ describe('Input validation', function() {
         };
     });
 
-    it('should reject invalid sizes', function() {
+    afterEach(function() {
+        return clearDb();
+    });
+
+    it('invalid sizes should be rejected', function() {
         const invalidSizes = [
             ['1.em', 'Invalid CSS number'],
             ['9.2ef', 'Invalid unit of measure'],
@@ -135,33 +207,71 @@ describe('Input validation', function() {
         });
     });
 
-    it('should accept valid votes', function() {
+    it('valid votes should be accepted', function() {
         expect(isValidVote(this.vote)).to.be.true;
         expect(validateVote(this.vote)).to.be.an('Array')
                                        .that.is.empty;
     });
 
-    it('should not insert a vote with no name', function() {
-        const vote = Object.assign({}, this.vote);
-        delete vote.name;
+    describe('insertVote()', function() {
+        it('should not insert votes with no name', function() {
+            delete this.vote.name;
 
-        return expect(this.db.insertVote(vote))
-            .to.be.rejectedWith(MissingColumnError);
+            return expect(this.db.insertVote(this.vote))
+                .to.be.rejectedWith(MissingColumnError);
+        });
+
+        it('should accept valid votes', function() {
+            return expect(this.db.insertVote(this.vote)).to.be.fulfilled;
+        });
     });
 
-    it('should not update a vote with no name', function() {
-        const vote = Object.assign({}, this.vote);
-        delete vote.name;
+    describe('updateVote()', function() {
+        beforeEach(function() {
+            return expect(this.db.insertVote(this.vote)).to.be.fulfilled;
+        });
 
-        return expect(this.db.updateVote(vote))
-            .to.be.rejectedWith(DBError);
+        it('should not update votes with no name', function() {
+            delete this.vote.name;
+
+            return expect(this.db.updateVote(this.vote))
+                .to.be.rejectedWith(DBError);
+        });
+
+        it('should accept valid votes', function() {
+            return expect(this.db.updateVote(this.vote)).to.be.fulfilled;
+        });
     });
 
-    it('should not replace a vote with no name', function() {
-        const vote = Object.assign({}, this.vote);
-        delete vote.name;
+    describe('replaceVote()', function() {
+        describe('non-existing vote', function() {
+            it('should not replace votes with no name', function() {
+                delete this.vote.name;
 
-        return expect(this.db.replaceVote(vote))
-            .to.be.rejectedWith(DBError);
+                return expect(this.db.replaceVote(this.vote))
+                    .to.be.rejectedWith(DBError);
+            });
+
+            it('should accept valid votes', function() {
+                return expect(this.db.replaceVote(this.vote)).to.be.fulfilled;
+            });
+        });
+
+        describe('existing vote', function() {
+            beforeEach(function() {
+                return expect(this.db.insertVote(this.vote)).to.be.fulfilled;
+            });
+
+            it('should not replace votes with no name', function() {
+                delete this.vote.name;
+
+                return expect(this.db.replaceVote(this.vote))
+                    .to.be.rejectedWith(DBError);
+            });
+
+            it('should accept valid votes', function() {
+                return expect(this.db.replaceVote(this.vote)).to.be.fulfilled;
+            });
+        });
     });
 });
