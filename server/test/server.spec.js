@@ -16,7 +16,7 @@ setArgv();
 
 const server = require('../index');
 
-describe('CLI parameters', function() {
+describe('The web server', function() {
     it('should listen on the passed port', async function() {
         const PORT = parseInt(process.argv[2]);
         const resp = await chai.request(`http://localhost:${ PORT }`)
@@ -32,6 +32,20 @@ describe('CLI parameters', function() {
 
         expect(resp).to.be.an('Object')
                     .with.property('ok', true);
+    });
+
+    it('should reply with a 400 for invalid JSON bodies', async function() {
+        const resp = await chai.request(server)
+                               .patch(`/votes/randomUser`)
+                               .set('Content-type', 'application/json')
+                               .send('{"invalidJSON"');
+
+        expect(resp).to.be.an('Object')
+                    .with.property('statusCode', 400);
+        expect(resp).to.have.property('body')
+                    .that.is.an('object')
+                    .with.property('error')
+                    .that.includes('JSON');
     });
 });
 

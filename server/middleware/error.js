@@ -1,5 +1,5 @@
 /**
- * @fileoverview This file groups error-handling middlewares.
+ * @fileoverview This file contains error-handling functions and middlewares.
  *
  * Created by Davide on 8/18/18.
  */
@@ -7,6 +7,19 @@
 const koaCompose = require('koa-compose');
 
 const { DBError } = require('../lib/db');
+
+/**
+ * This function is meant as a callback for the 'onerror' option of the
+ * koa-bodyparser module.
+ *
+ * @summary Callback for koa-bodyparser 'onerror' option.
+ *
+ * @param {Error} err - Error thrown by koa-bodyparser.
+ * @param ctx - The koa context.
+ */
+const bodyParser = (err, ctx) => {
+    ctx.throw(400, 'Bad request', {body: {error: err.message}});
+};
 
 /**
  * This function is meant to handle errors thrown by following middlewares. It
@@ -88,11 +101,12 @@ const catchDB = makeErrorMiddleware((ctx, error) => {
     ctx.body = Object.assign({error: error.message}, error.error);
 });
 
-/**
- * @type {Function} Composition of error-handling middlewares.
- */
-// Catchall goes first, so that it can catch errors rethrown by catchDB
-module.exports = koaCompose([
-    catchAll,
-    catchDB
-]);
+module.exports = {
+    bodyParser,
+
+    // Catchall goes first, so that it can catch errors rethrown by catchDB
+    middleware: koaCompose([
+       catchAll,
+       catchDB
+   ])
+};
