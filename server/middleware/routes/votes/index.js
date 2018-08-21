@@ -1,5 +1,5 @@
 /**
- * @fileoverview
+ * @fileoverview This file contains all the /votes REST routes.
  *
  * Created by Davide on 8/18/18.
  */
@@ -12,7 +12,14 @@ const router = new Router({
     prefix: '/votes'
 });
 
-router.get('/', async (ctx, next) => {
+/**
+ * This middleware is meant for the collection GET endpoint, that is to
+ * retrieves all the votes from the database. If there are none, responds with
+ * a 204.
+ *
+ * @summary Middleware for the collection GET endpoint.
+ */
+const getAll = async (ctx, next) => {
     const votes = await ctx.db.getAllVotes();
 
     if (votes.length > 0) {
@@ -24,32 +31,63 @@ router.get('/', async (ctx, next) => {
     }
 
     await next();
-});
+};
 
-router.get('/:voter', async (ctx, next) => {
+/**
+ * This middleware implements the element GET endpoint. it fetches the vote
+ * whose voter's name is given in the URL as 'voter' parameter.
+ *
+ * @summary Middleware for the element GET endpoint.
+ */
+const getOne = async (ctx, next) => {
     ctx.body = await ctx.db.getVote(ctx.params.voter);
 
     await next();
-}, middleware.noUser);
+};
 
-router.patch('/:voter', middleware.withVote, async (ctx, next) => {
+/**
+ * This middleware serves as the PATCH endpoint for a single element. This
+ * implies that it only changes the given properties of a single vote, whose
+ * voter has the name indicated in the 'voter' URL parameter. Returns the full
+ * vote after the update.
+ *
+ * @summary Middleware for the element PATCH endpoint.
+ */
+const patchOne = async (ctx, next) => {
     const result = await ctx.db.updateVote(ctx.vote);
     const vote = result.result[0];
-    if (vote)
+
+    // Preventing errors due to indexing undefined values with hey 'name'
+    if (vote) {
         delete vote.name;
+    }
 
     ctx.body = vote;
 
     await next();
-}, middleware.noUser);
+};
 
-router.put('/:voter', middleware.withFullVote, async (ctx, next) => {
+/**
+ * This middleware is meant for the PUT endpoint for single votes, that is it
+ * entirely replaces the vote indicated by the 'voters' URL parameter, or it
+ * creates such vote if it doesn't exist yet. The vote is assumed to already
+ * contain all the properties. It responds with a 201 if the vote is newly
+ * created, or with a 204 if it is modified.
+ *
+ * @summary Middleware for the element PUT endpoint.
+ */
+const putOne = async (ctx, next) => {
     const result = await ctx.db.replaceVote(ctx.vote);
 
     ctx.status = result.created ? 201 : 204;
     delete ctx.body;
 
     await next();
-});
+};
+
+router.get('/', getAll);
+router.get('/:voter', getOne, middleware.noUser);
+router.patch('/:voter', middleware.withVote, patchOne, middleware.noUser);
+router.put('/:voter', middleware.withFullVote, putOne);
 
 module.exports = router;
