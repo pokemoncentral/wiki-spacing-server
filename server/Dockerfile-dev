@@ -4,7 +4,7 @@ ARG ARCH
 FROM ${ARCH}node:10.8.0-stretch
 
 # Nodemon is used to watch changes to the server code and restart it.
-RUN npm install -g nodemon wait-for
+RUN npm install -g nodemon
 
 # Wait-for is used to wait for the server. Netcat is a dependency.
 RUN apt-get update && apt-get install -y netcat
