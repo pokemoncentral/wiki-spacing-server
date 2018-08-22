@@ -10,8 +10,15 @@ RUN cp /wait-for/wait-for /usr/local/bin/wait-for
 RUN rm -rf /wait-for
 RUN chmod +x /usr/local/bin/wait-for
 
+# Copying application data to volume
+COPY server /usr/src/app
+
+# Installing dependencies
+RUN cd /usr/src/app
+RUN npm install --only=production
+
 # This is necessary in order to expand $DB_PORT in the entrypoint
-RUN echo 'wait-for -t 0 db:$DB_PORT -- "$@"' > /entrypoint.sh
+RUN echo 'wait-for db:$DB_PORT -t 300 -- "$@"' > /entrypoint.sh
 
 # Waiting for database
 ENTRYPOINT ["bash", "/entrypoint.sh"]
