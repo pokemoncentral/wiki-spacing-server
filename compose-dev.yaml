@@ -9,6 +9,7 @@ services:
       args:
         ARCH: ''
       context: server
+      dockerfile: Dockerfile-dev
 
     depends_on:
       - db

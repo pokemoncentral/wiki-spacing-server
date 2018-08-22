@@ -1,5 +1,0 @@
-# Defining custom merge strategies
-
-# Files that should not be overridden by other branches versions
-/server/Dockerfile=ours
-/server/Dockerfile-test=ours

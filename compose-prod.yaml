@@ -7,8 +7,11 @@ services:
     build:
       args:
         ARCH: 'arm32v7/'
+      dockerfile: Dockerfile-prod
 
     image: davla/misc:wiki-spacing-web-prod
+
+    restart: 'on-failure'
 
     volumes:
       - type: volume
@@ -20,3 +23,5 @@ services:
         ARCH: 'arm32v7/'
 
     image: davla/misc:wiki-spacing-db-prod
+
+    restart: 'on-failure'
