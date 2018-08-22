@@ -11,7 +11,7 @@ RUN rm -rf /wait-for
 RUN chmod +x /usr/local/bin/wait-for
 
 # This is necessary in order to expand $DB_PORT in the entrypoint
-RUN echo 'wait-for db:$DB_PORT -- "$@"' > /entrypoint.sh
+RUN echo 'wait-for -t 0 db:$DB_PORT -- "$@"' > /entrypoint.sh
 
 # Waiting for database
 ENTRYPOINT ["bash", "/entrypoint.sh"]
