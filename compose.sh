@@ -31,8 +31,8 @@ case "$(uname -m)" in
         ;;
 
     'armv7l')
-        export DB_IMAGE='arm37v7/postgres:10.5'
-        export WEB_IMAGE='arm37v7/node:10.8.0-stretch'
+        export DB_IMAGE='arm32v7/postgres:10.5'
+        export WEB_IMAGE='arm32v7/node:10.8.0-stretch'
         ;;
 esac
 
