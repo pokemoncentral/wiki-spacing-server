@@ -1,0 +1,7 @@
+# Files to be ignored when importing from docker containers during build
+
+node_modules
+.dockerignore
+.nvmrc
+Dockerfile-*
+nodemon.json

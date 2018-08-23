@@ -7,7 +7,7 @@ services:
   web:
     build:
       args:
-        ARCH: ''
+        WEB_IMAGE: $WEB_IMAGE
       context: server
       dockerfile: Dockerfile-dev
 
@@ -34,7 +34,7 @@ services:
   db:
     build:
       args:
-        ARCH: ''
+        DB_IMAGE: $DB_IMAGE
       context: db
 
     image: davla/misc:wiki-spacing-db-dev

@@ -1,27 +1,29 @@
 # Dockerfile for web server - production environment
 
-ARG ARCH
-FROM ${ARCH}node:10.8.0-stretch
+ARG WEB_IMAGE
+FROM ${WEB_IMAGE}
 
 # Wait-for is used to wait for the server. Netcat is a dependency.
-RUN apt-get update && apt-get install -y netcat
+RUN command -v apt-get \
+    && { apt-get update && apt-get install -y netcat; } \
+    || { apk add git netcat-openbsd; }
 RUN git clone 'https://github.com/eficode/wait-for.git' /wait-for
 RUN cp /wait-for/wait-for /usr/local/bin/wait-for
 RUN rm -rf /wait-for
 RUN chmod +x /usr/local/bin/wait-for
 
 # Copying application data to volume
-COPY server /usr/src/app
+COPY ./ /usr/src/app/
 
 # Installing dependencies
-RUN cd /usr/src/app
+WORKDIR /usr/src/app
 RUN npm install --only=production
 
 # This is necessary in order to expand $DB_PORT in the entrypoint
 RUN echo 'wait-for db:$DB_PORT -t 300 -- "$@"' > /entrypoint.sh
 
 # Waiting for database
-ENTRYPOINT ["bash", "/entrypoint.sh"]
+ENTRYPOINT ["sh", "/entrypoint.sh"]
 
-# Executing server with nodeamon
-CMD node /usr/src/app -- "$WEB_PORT" "$DB_PORT"
+# Executing server
+CMD node /usr/src/app "$WEB_PORT" "$DB_PORT"

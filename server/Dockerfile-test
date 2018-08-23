@@ -1,6 +1,6 @@
 # Dockerfile for web server - testing environment
 
-FROM davla/misc:wiki-spacing-web-dev
+FROM davla/misc:wiki-spacing-web-prod
 
 # Running tests from the app sources
 WORKDIR /usr/src/app

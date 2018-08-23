@@ -5,9 +5,11 @@ version: '3.2'
 services:
   web:
     build:
-      args:
-        ARCH: 'arm32v7/'
       dockerfile: Dockerfile-prod
+
+    environment:
+      DB_PORT:
+      WEB_PORT:
 
     image: davla/misc:wiki-spacing-web-prod
 
@@ -18,10 +20,6 @@ services:
         target: /usr/src/app
 
   db:
-    build:
-      args:
-        ARCH: 'arm32v7/'
-
     image: davla/misc:wiki-spacing-db-prod
 
     restart: 'on-failure'

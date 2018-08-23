@@ -16,12 +16,25 @@
 #
 ###################################################
 
-# Database port (defautl value, as the database is unreachable from outside
+# Database port (default value, as the database is unreachable from outside
 # the docker network)
 export DB_PORT=5432
 
 # Web server port on docker network
 export WEB_PORT=29004
+
+# Different architectures need different docker base images
+case "$(uname -m)" in
+    'x86_64')
+        export DB_IMAGE='postgres:10.5-alpine'
+        export WEB_IMAGE='node:10.8.0-alpine'
+        ;;
+
+    'armv7l')
+        export DB_IMAGE='arm37v7/postgres:10.5'
+        export WEB_IMAGE='arm37v7/node:10.8.0-stretch'
+        ;;
+esac
 
 ###################################################
 #
