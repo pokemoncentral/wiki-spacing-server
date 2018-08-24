@@ -36,6 +36,9 @@ case "$(uname -m)" in
         ;;
 esac
 
+# Production environemnt is slow
+export COMPOSE_HTTP_TIMEOUT=300
+
 ###################################################
 #
 #               Input processing
