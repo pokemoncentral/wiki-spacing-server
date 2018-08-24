@@ -4,6 +4,9 @@
  * Created by Davide on 8/12/18.
  */
 
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const Koa = require('koa');
 
 const middleware = require('./middleware');
@@ -31,4 +34,10 @@ app.use(middleware({
     dbPort: DB_PORT
 }));
 
-module.exports = app.listen(PORT);
+const options = {
+    key: fs.readFileSync('/etc/letsencrypt/live/maze0.hunnur.com/privkey.pem', 'utf8'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/maze0.hunnur.com/fullchain.pem', 'utf8')
+};
+
+const server = https.createServer(options, app.callback());
+module.exports = server.listen(PORT);
