@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# This script is meant as a wrapper for docker-compose, in order to export some
-# environment variables first. It uses by default the compose-dev.yaml file,
-# but other configurations can be added on top of it via the -E flag as
-# described below.
+# This script is meant as a wrapper for docker-compose, in order to do some
+# setup first. It uses by default the compose-dev.yaml file, but other
+# configurations can be added on top of it via the -E flag as described below.
 #
 # Arguments:
 #   - E [ prod | test ]: The environment for which docker-compose should be
@@ -35,6 +34,20 @@ case "$(uname -m)" in
         export WEB_IMAGE='arm32v7/node:10.8.0-stretch'
         ;;
 esac
+
+###################################################
+#
+#                   TSL
+#
+###################################################
+
+# Certificates and keys are symbolic links, which are known not to work
+# in docker. Therefore they are copied in the docker build context of
+# the server, so that they are available from inside the container.
+
+mkdir -p server/tsl
+[[ ! -e server/tsl/* ]] \
+    && sudo bash -c 'cp /etc/letsencrypt/live/maze0.hunnur.com/* server/tsl'
 
 ###################################################
 #

@@ -19,7 +19,7 @@ const server = require('../index');
 describe('The web server', function() {
     it('should listen on the passed port', async function() {
         const PORT = parseInt(process.argv[2]);
-        const resp = await chai.request(`http://localhost:${ PORT }`)
+        const resp = await chai.request(`https://localhost:${ PORT }`)
                                .get('/');
 
         expect(resp).to.be.an('Object')

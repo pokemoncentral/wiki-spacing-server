@@ -8,6 +8,9 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const Koa = require('koa');
+const util = require('util');
+
+const readFile = util.promisify(fs.readFile);
 
 const middleware = require('./middleware');
 
@@ -34,10 +37,27 @@ app.use(middleware({
     dbPort: DB_PORT
 }));
 
-const options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/maze0.hunnur.com/privkey.pem', 'utf8'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/maze0.hunnur.com/fullchain.pem', 'utf8')
+/**
+ * This function asynchronously reads TSL private key and certificates, and
+ * returns an object containing them. This object is suited to be passed as
+ * options to https.createServer().
+ *
+ * @summary Asynchronously reads certificate and key and returns the https
+ * options object.
+ *
+ * @return {{key: string, cert: string}} The https option object.
+ */
+const getTsl = async () => {
+    const baseDir = `${ __dirname }/tsl`;
+    const key = await readFile(`${ baseDir }/privkey.pem`,{encoding: 'utf8'});
+    const cert = await readFile(`${ baseDir }/cert.pem`, {encoding: 'utf8'});
+
+    return {key, cert};
 };
 
-const server = https.createServer(options, app.callback());
-module.exports = server.listen(PORT);
+getTsl()
+    .then(opts => {
+        const server = https.createServer(opts, app.callback());
+        module.exports = server.listen(PORT);
+    })
+    .catch(console.log);
