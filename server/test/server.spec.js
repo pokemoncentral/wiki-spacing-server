@@ -33,8 +33,7 @@ describe('The web server', function() {
         const resp = await chai.request(`https://localhost:${ PORT }`)
                                .get('/');
 
-        expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 404);
+        expect(resp).to.have.status(404);
     });
 
     it('should be able to connect to the database', async function() {
@@ -51,9 +50,9 @@ describe('The web server', function() {
                                .set('Content-type', 'application/json')
                                .send('{"invalidJSON"');
 
+        expect(resp).to.have.status(400);
         expect(resp).to.be.an('Object')
-                    .with.property('statusCode', 400);
-        expect(resp).to.have.property('body')
+                    .with.property('body')
                     .that.is.an('object')
                     .with.property('error')
                     .that.includes('JSON');
@@ -123,9 +122,9 @@ describe('GET endpoints', function() {
             const resp = await this.server
                                    .get('/votes');
 
+            expect(resp).to.have.status(204);
             expect(resp).to.be.an('Object')
-                        .with.property('statusCode', 204);
-            expect(resp).to.have.property('body')
+                        .with.property('body')
                         .that.is.empty;
         });
     });
@@ -157,10 +156,11 @@ describe('GET endpoints', function() {
             const resp = await this.server
                                    .get(`/votes/${ this.user }`);
 
+            expect(resp).to.have.status(404);
             expect(resp).to.be.an('Object')
-                        .with.property('statusCode', 404);
-            expect(resp.body).to.be.an('Object')
-                             .with.property('user', this.user);
+                        .with.property('body')
+                        .that.is.an('Object')
+                        .with.property('user', this.user);
         });
     });
 });
@@ -232,10 +232,11 @@ describe('PATCH endpoints', function() {
                                    .patch(`/votes/${ this.user }`)
                                    .send(this.vote);
 
+            expect(resp).to.have.status(404);
             expect(resp).to.be.an('Object')
-                        .with.property('statusCode', 404);
-            expect(resp.body).to.be.an('Object')
-                             .with.property('user', this.user);
+                        .with.property('body')
+                        .that.is.an('Object')
+                        .with.property('user', this.user);
         });
     });
 });
@@ -298,9 +299,10 @@ describe('PUT endpoints', function() {
                                    .put(`/votes/${ this.user }`)
                                    .send(this.vote);
 
+            expect(resp).to.have.status(204);
             expect(resp).to.be.an('Object')
-                        .with.property('statusCode', 204);
-            expect(resp).to.have.property('body')
+                        .with.property('body')
+                        .that.is.an('Object')
                         .that.is.empty;
         });
 
@@ -309,9 +311,10 @@ describe('PUT endpoints', function() {
                                    .put(`/votes/${ this.user }`)
                                    .send(this.vote);
 
+            expect(resp).to.have.status(201);
             expect(resp).to.be.an('Object')
-                        .with.property('statusCode', 201);
-            expect(resp).to.have.property('body')
+                        .with.property('body')
+                        .that.is.an('Object')
                         .that.is.empty;
         });
 
@@ -339,6 +342,9 @@ describe('PUT endpoints', function() {
                                           .get(`/votes/${ this.user }`);
 
             expect(fetchedVote).to.be.an('Object')
+                               .with.property('ok', true);
+
+            expect(fetchedVote).to.be.an('Object')
                                .with.property('body');
             expect(fetchedVote.body).to.be.an('Object')
                                     .with.property('large', null);
@@ -351,10 +357,10 @@ describe('PUT endpoints', function() {
                                    .put(`/votes/${ this.user }`)
                                    .send(this.vote);
 
-            expect(resp).to.be.an('Object')
-                        .with.property('statusCode', 400);
+            expect(resp).to.have.status(400);
 
-            expect(resp.body).to.be.an('Object');
+            expect(resp).to.have.property('body')
+                        .that.is.an('Object');
             expect(resp.body).to.have.property('error')
                              .that.is.a('string');
             expect(resp.body).to.have.property('invalidSizes')
