@@ -55,9 +55,9 @@ const getTsl = async () => {
     return {key, cert};
 };
 
-getTsl()
+module.exports = getTsl()
     .then(opts => {
         const server = https.createServer(opts, app.callback());
-        module.exports = server.listen(PORT);
+        return server.listen(PORT);
     })
     .catch(console.log);

@@ -7,6 +7,9 @@
 # Arguments:
 #   - E [ prod | test ]: The environment for which docker-compose should be
 #       run. Selects one additional compose-*.yaml file.
+#   - C [ local | prod ]: The certificate to use, localhost vs production.
+#       If not given, will use 'local' if E is 'dev' or 'test', 'prod'
+#       otherwise.
 #   - $@: Anything that docker-compose accepts.
 
 ###################################################
@@ -40,28 +43,21 @@ export COMPOSE_HTTP_TIMEOUT=300
 
 ###################################################
 #
-#                   TSL
-#
-###################################################
-
-# Certificates and keys are symbolic links, which are known not to work
-# in docker. Therefore they are copied in the docker build context of
-# the server, so that they are available from inside the container.
-
-mkdir -p server/tsl
-[[ ! -e server/tsl/* ]] \
-    && sudo bash -c 'cp /etc/letsencrypt/live/maze0.hunnur.com/* server/tsl'
-
-###################################################
-#
 #               Input processing
 #
 ###################################################
 
+ENVIRONMENT='dev'
+CERT=''
 EXTRA_COMPOSE_FILE=''
 while getopts 'E:' OPTION; do
     case "$OPTION" in
+        'P')
+            CERT="$OPTARG"
+            ;;
+
         'E')
+            ENVIRONMENT="$OPTARG"
             EXTRA_COMPOSE_FILE="-f compose-$OPTARG.yaml"
             ;;
 
@@ -71,6 +67,53 @@ while getopts 'E:' OPTION; do
     esac
 done
 shift $(( OPTIND - 1 ))
+
+if [[ -z "$CERT" ]]; then
+    case "$ENVIRONMENT" in
+        dev|test)
+            CERT='local'
+            ;;
+
+        prod)
+            CERT='prod'
+            ;;
+    esac
+fi
+
+###################################################
+#
+#                   TSL
+#
+###################################################
+
+# Certificates and keys are symbolic links, which are known not to work
+# in docker. Therefore they are copied in the docker build context of
+# the server, so that they are available from inside the container.
+
+mkdir -p server/tsl
+
+case "$CERT" in
+    'local')
+        CERT_FILE='/etc/ssl/localcerts/localhost.crt'
+        KEY_FILE='/etc/ssl/localcerts/localhost.key'
+        CERT_DOMAIN='localhost'
+        ;;
+
+    'prod')
+        CERT_FILE='/etc/letsencrypt/live/maze0.hunnur.com/cert.pem'
+        KEY_FILE='/etc/letsencrypt/live/maze0.hunnur.com/privkey.pem'
+        CERT_DOMAIN='maze0.hunnur.com'
+        ;;
+esac
+
+ACTIVE_DOMAIN="$(openssl x509 -noout -in "$CERT_FILE" -subject \
+    | cut -d' ' -f3)"
+if [[ ! -e server/tsl/* || "$ACTIVE_DOMAIN" != "$CERT_DOMAIN" ]]; then
+    rm -rf server/tsl/*
+    sudo bash -c "cp \"$CERT_FILE\" server/tsl/cert.pem"
+    sudo bash -c "cp \"$KEY_FILE\" server/tsl/privkey.pem"
+    sudo bash -c "chown \"$USER\":\"$USER\" server/tsl/*"
+fi
 
 ###################################################
 #
