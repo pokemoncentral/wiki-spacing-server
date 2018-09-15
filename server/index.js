@@ -5,13 +5,14 @@
  */
 
 const fs = require('fs');
-const http = require('http');
 const https = require('https');
-const Koa = require('koa');
 const util = require('util');
+
+const Koa = require('koa');
 
 const readFile = util.promisify(fs.readFile);
 
+const { DB } = require('./lib/db/db');
 const middleware = require('./middleware');
 
 const app = new Koa();
@@ -32,6 +33,10 @@ const app = new Koa();
 const args = process.argv.map(a => parseInt(a.trim()));
 const PORT = args[2];
 const DB_PORT = args[3];
+
+// Database migration
+const db = DB.getInstance(DB_PORT);
+db.migrate.latest();
 
 app.use(middleware({
     dbPort: DB_PORT
@@ -59,5 +64,4 @@ module.exports = getTsl()
     .then(opts => {
         const server = https.createServer(opts, app.callback());
         return server.listen(PORT);
-    })
-    .catch(console.log);
+    });
