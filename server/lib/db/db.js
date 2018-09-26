@@ -7,6 +7,7 @@
 const path = require('path');
 
 const knex = require('knex');
+const type = require('type-detect');
 
 /**
  * @summary General database utility functions and variables.
@@ -141,8 +142,6 @@ const getInstance = port => {
 
 /**
  * @summary This class represents a generic database error.
- *
- * @extends Error
  */
 class DBError extends Error {
 

@@ -7,8 +7,6 @@
 const chai = require('chai');
 const expect = chai.expect;
 
-const { DB } = require('../lib/db');
-
 /**
  * @summary Range of valid ports, shifted down by 1024.
  * @type {int}
@@ -65,15 +63,14 @@ const testVotesGroups = function(groups) {
 };
 
 /**
- * @summary Deletes from the database all the content that is not present
- * at initialization.
+ * @summary Empties the table managed by the passed DBVote instance.
  *
+ * @param {VoteTableManager} DbClass - The votes table manager.
  * @return {Promise} The knex object to apply the database changes.
  */
-const clearDb = function() {
-    const db = new DB(parseInt(process.env.DB_PORT));
-
-    return db.knex('votes').truncate();
+const clearDb = function(DbClass) {
+    DbClass.connect(parseInt(process.env.DB_PORT));
+    return DbClass.db.table(DbClass.table).truncate();
 };
 
 module.exports = {
