@@ -1,8 +1,11 @@
 /**
- * @fileoverview
+ * @fileoverview This file contains all the middlewares for the standard /vote
+ * REST endpoints.
  *
  * Created by Davide on 9/26/18.
  */
+
+const koaCompose = require('koa-compose');
 
 const middleware = require('./middleware');
 
@@ -79,22 +82,23 @@ const putOne = async (ctx, next) => {
     await next();
 };
 
+// Auxiliary middleware are also added to the core endpoint ones
 module.exports = {
-    getAll: [getAll],
+    getAll,
 
-    getOne: [
+    getOne: koaCompose([
         getOne,
-        ...middleware.noUser
-    ],
+        middleware.noUser
+    ]),
 
-    patchOne: [
-        ...middleware.withVote,
+    patchOne: koaCompose([
+        middleware.withVote,
         patchOne,
-        ...middleware.noUser
-    ],
+        middleware.noUser
+    ]),
 
-    putOne: [
-        ...middleware.withFullVote,
+    putOne: koaCompose([
+        middleware.withFullVote,
         putOne
-    ]
+    ])
 };

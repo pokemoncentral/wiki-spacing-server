@@ -1,5 +1,5 @@
 /**
- * @fileoverview
+ * @fileoverview This file contains the routes for the /votes/table endpoints.
  *
  * Created by Davide on 9/26/18.
  */

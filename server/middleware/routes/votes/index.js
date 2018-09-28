@@ -13,10 +13,7 @@ const router = new Router({
     prefix: '/votes'
 });
 
-router.use('/grid', ...grid)
-      .use('/table', ...table);
+router.nest('/grid', grid)
+      .nest('/table', table);
 
-module.exports = [
-    router.routes(),
-    router.allowedMethods()
-];
+module.exports = router;

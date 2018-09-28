@@ -9,22 +9,12 @@ const cors = require('koa2-cors');
 const koaCompose = require('koa-compose');
 
 const error = require('./error');
-const voteRoutes = require('./routes/votes');
+const routes = require('./routes');
 
-/**
- * This function uses koa-compose to aggregate top-level middleware. The
- * parameters are passed to the middlewares needing them.
- *
- * @summary Returns the aggregation of top-level middleware.
- *
- * @param {object} args - Named arguments wrapper.
- * @param {int} args.dbPort - The database server port.
- * @returns {Function} The composition of all the top-level middleware.
- */
 module.exports = koaCompose([
     cors(),
     error.middleware,
     bodyParser({onerror: error.bodyParser}),
-    ...voteRoutes
+    routes
 ]);
 
