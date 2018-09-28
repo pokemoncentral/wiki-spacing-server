@@ -108,7 +108,8 @@ esac
 
 ACTIVE_DOMAIN="$(openssl x509 -noout -in "$CERT_FILE" -subject \
     | cut -d' ' -f3)"
-if [[ ! -e server/tsl/* || "$ACTIVE_DOMAIN" != "$CERT_DOMAIN" ]]; then
+if ! find server/tsl/ -type f &> /dev/null \
+        || [[ "$ACTIVE_DOMAIN" != "$CERT_DOMAIN" ]]; then
     rm -rf server/tsl/*
     sudo bash -c "cp \"$CERT_FILE\" server/tsl/cert.pem"
     sudo bash -c "cp \"$KEY_FILE\" server/tsl/privkey.pem"
