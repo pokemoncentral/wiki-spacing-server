@@ -6,7 +6,7 @@
 
 const koaCompose = require('koa-compose');
 
-const { DBError } = require('../lib/db');
+const { DBError } = require('../lib/db/db');
 
 /**
  * This function is meant as a callback for the 'onerror' option of the

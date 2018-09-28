@@ -19,9 +19,9 @@ const { isValidVote, validateVote } = require('../lib/validate-vote');
  * @summary Test suite for a votes table manager.
  *
  * @param {VoteTableManager} DbClass - The votes table manager.
- * @return {Function} The mocha test suite.
+ * @return {function} The mocha test suite.
  */
-const dbTests = function(DbClass) {
+const dbTests = DbClass => {
     return function() {
         before(async function() {
             const db = DB.getInstance(parseInt(process.env.DB_PORT));

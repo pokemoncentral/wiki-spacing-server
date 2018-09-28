@@ -60,6 +60,22 @@ const addMissingSizes = async (ctx, next) => {
 };
 
 /**
+ * This function returns a middleware function that adds to the context the
+ * passed votes table manager, with key db.
+ *
+ * @summary A middleware adding the passed vote table manager.
+ *
+ * @param {VoteTableManager} DbClass - The vote table manager.
+ * @return {function[]} A middleware adding an object to work with the database.
+ */
+const db = DbClass => [async (ctx, next) => {
+    DbClass.connect();
+    ctx.db = DbClass;
+
+    await next();
+}];
+
+/**
  * This middleware throws a 404 error if the body evaluates to false, assuming
  * the reason to be a non-existing user passed as 'voter' URL parameter.
  *
@@ -74,16 +90,17 @@ const noUser = async (ctx, next) => {
 };
 
 module.exports = {
-    noUser,
+    db,
+    noUser: [noUser],
 
-    withVote: koaCompose([
+    withVote: [
         add,
         validate
-    ]),
+    ],
 
-    withFullVote: koaCompose([
+    withFullVote: [
         add,
         validate,
         addMissingSizes
-    ])
+    ]
 };

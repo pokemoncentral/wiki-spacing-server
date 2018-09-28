@@ -8,7 +8,6 @@ const bodyParser = require('koa-bodyparser');
 const cors = require('koa2-cors');
 const koaCompose = require('koa-compose');
 
-const db = require('./db');
 const error = require('./error');
 const voteRoutes = require('./routes/votes');
 
@@ -22,12 +21,10 @@ const voteRoutes = require('./routes/votes');
  * @param {int} args.dbPort - The database server port.
  * @returns {Function} The composition of all the top-level middleware.
  */
-module.exports = args => koaCompose([
+module.exports = koaCompose([
     cors(),
     error.middleware,
     bodyParser({onerror: error.bodyParser}),
-    db(args.dbPort),
-    voteRoutes.routes(),
-    voteRoutes.allowedMethods()
+    ...voteRoutes
 ]);
 

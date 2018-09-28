@@ -34,13 +34,17 @@ const args = process.argv.map(a => parseInt(a.trim()));
 const PORT = args[2];
 const DB_PORT = args[3];
 
-// Database migration
-const db = DB.getInstance(DB_PORT);
-db.migrate.latest();
-
-app.use(middleware({
-    dbPort: DB_PORT
-}));
+/**
+ * This function creates the HTTPS web server with the given options, setting
+ * it to listen on the port passed as first CLI argument.
+ *
+ * @param {object} opts - The options for the HTTPS web server.
+ * @return {Server} The HTTPS server listening on the first CLI argument port.
+ */
+const createServer = opts => {
+    const server = https.createServer(opts, app.callback());
+    return server.listen(PORT);
+};
 
 /**
  * This function asynchronously reads TSL private key and certificates, and
@@ -60,8 +64,8 @@ const getTsl = async () => {
     return {key, cert};
 };
 
-module.exports = getTsl()
-    .then(opts => {
-        const server = https.createServer(opts, app.callback());
-        return server.listen(PORT);
-    });
+app.use(middleware);
+
+module.exports = DB.getInstance(DB_PORT).migrate.latest()
+    .then(getTsl)
+    .then(createServer);
